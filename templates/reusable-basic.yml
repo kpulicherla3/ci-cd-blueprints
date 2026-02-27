@@ -1,0 +1,9 @@
+name: reusable-basic
+on:
+  workflow_call:
+jobs:
+  basic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "Reusable workflow OK"
