@@ -1,8 +1,65 @@
-name: ci
-on: [pull_request, push]
+name: python-ci-template
+
+on:
+  workflow_call:
+    inputs:
+      python-version:
+        description: "Python version to use"
+        required: false
+        type: string
+        default: "3.11"
+      install-command:
+        description: "Command used to install dependencies"
+        required: false
+        type: string
+        default: "python -m pip install -r requirements.txt"
+      lint-command:
+        description: "Command used to run lint checks"
+        required: false
+        type: string
+        default: "python -m pip install ruff && ruff check ."
+      test-command:
+        description: "Command used to run tests"
+        required: false
+        type: string
+        default: "python -m pip install pytest && pytest -q"
+      run-lint:
+        description: "Whether to run lint checks"
+        required: false
+        type: boolean
+        default: true
+      run-tests:
+        description: "Whether to run tests"
+        required: false
+        type: boolean
+        default: true
+  pull_request:
+  push:
+    branches: [master]
+
 jobs:
-  basic:
+  python-ci:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - run: echo "CI OK"
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version || '3.11' }}
+          cache: pip
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install dependencies
+        run: ${{ inputs.install-command || 'python -m pip install -r requirements.txt' }}
+
+      - name: Lint
+        if: ${{ inputs.run-lint != false }}
+        run: ${{ inputs.lint-command || 'python -m pip install ruff && ruff check .' }}
+
+      - name: Test
+        if: ${{ inputs.run-tests != false }}
+        run: ${{ inputs.test-command || 'python -m pip install pytest && pytest -q' }}
